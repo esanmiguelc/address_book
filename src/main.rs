@@ -71,6 +71,4 @@ fn main() {
         let message = view(&state);
         update(&mut state, message)
     }
-
-    println!("{:?}", state.records)
 }
