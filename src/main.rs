@@ -2,12 +2,15 @@ use std::io::{self};
 
 enum Page {
     AddRecordPage,
+    AllRecordsPage,
     MainPage
 }
 
 enum Message {
     AddRecord(Record),
     ChangePage(Page),
+    ViewAllRecords,
+    Exit,
     NoOp,
 }
 
@@ -25,18 +28,33 @@ struct State {
 fn view(state: &State) -> Message {
     match state.current_page {
         Page::MainPage => {
-            let mut buffer = String::new();
-            println!("Welcome to the Address book!");
             println!("Please choose an option:");
             println!("1.) Add new record.");
+            println!("2.) View all records.");
+            println!("0.) Exit.");
+            let mut buffer = String::new();
             io::stdin().read_line(&mut buffer)
                 .expect("Something unexpected happened.");
 
             match buffer.trim() {
                 "1" => Message::ChangePage(Page::AddRecordPage),
+                "2" => Message::ViewAllRecords,
+                "0" => Message::Exit,
                 _ => Message::NoOp
             }
-        }
+        },
+        Page::AllRecordsPage => {
+            println!("Records:");
+            for record in &state.records {
+                println!("{}: No. {}", record.full_name, record.phone_number)
+            }
+
+            println!("Press any key to continue.");
+            let mut buffer = String::new();
+            io::stdin().read_line(&mut buffer)
+                .expect("Something unexpected happened.");
+            Message::ChangePage(Page::MainPage)
+        },
         Page::AddRecordPage => {
             println!("What is the full name?");
             let mut name = String::new();
@@ -58,7 +76,14 @@ fn update(state: &mut State, message: Message) {
             state.current_page = page
         },
         Message::AddRecord(name) => {
-            state.records.push(name)
+            state.records.push(name);
+            state.current_page = Page::MainPage
+        },
+        Message::ViewAllRecords => {
+            state.current_page = Page::AllRecordsPage
+        },
+        Message::Exit => {
+            std::process::exit(0)
         },
         Message::NoOp => {
         }
@@ -67,7 +92,7 @@ fn update(state: &mut State, message: Message) {
 
 fn main() {
     let mut state: State = State { current_page: Page::MainPage, records: Vec::new() };
-    while state.records.len() == 0 {
+    loop {
         let message = view(&state);
         update(&mut state, message)
     }
